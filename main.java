@@ -1,229 +1,57 @@
-package application;
+ArrayList<Integer> x = new ArrayList<Integer>(), y = new ArrayList<Integer>();
+int w=30, h=30, blocks=20, direction=2, foodx=15, foody=15, speed = 8, fc1 = 255, fc2 = 255, fc3 = 255; 
+int[]x_direction={0, 0, 1, -1}, y_direction={1, -1, 0, 0}; //direction for x and y
+boolean gameover=false;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import javafx.animation.AnimationTimer;
-import javafx.application.Application;
-import javafx.stage.Stage;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-
-public class Main extends Application {
-	// variable
-	static int speed = 5;
-	static int foodcolor = 0;
-	static int width = 20;
-	static int height = 20;
-	static int foodX = 0;
-	static int foodY = 0;
-	static int cornersize = 25;
-	static List<Corner> snake = new ArrayList<>();
-	static Dir direction = Dir.left;
-	static boolean gameOver = false;
-	static Random rand = new Random();
-
-	public enum Dir {
-		left, right, up, down
-	}
-
-	public static class Corner {
-		int x;
-		int y;
-
-		public Corner(int x, int y) {
-			this.x = x;
-			this.y = y;
-		}
-
-	}
-
-	public void start(Stage primaryStage) {
-		try {
-			newFood();
-
-			VBox root = new VBox();
-			Canvas c = new Canvas(width * cornersize, height * cornersize);
-			GraphicsContext gc = c.getGraphicsContext2D();
-			root.getChildren().add(c);
-
-			new AnimationTimer() {
-				long lastTick = 0;
-
-				public void handle(long now) {
-					if (lastTick == 0) {
-						lastTick = now;
-						tick(gc);
-						return;
-					}
-
-					if (now - lastTick > 1000000000 / speed) {
-						lastTick = now;
-						tick(gc);
-					}
-				}
-
-			}.start();
-
-			Scene scene = new Scene(root, width * cornersize, height * cornersize);
-
-			// control
-			scene.addEventFilter(KeyEvent.KEY_PRESSED, key -> {
-				if (key.getCode() == KeyCode.W) {
-					direction = Dir.up;
-				}
-				if (key.getCode() == KeyCode.A) {
-					direction = Dir.left;
-				}
-				if (key.getCode() == KeyCode.S) {
-					direction = Dir.down;
-				}
-				if (key.getCode() == KeyCode.D) {
-					direction = Dir.right;
-				}
-
-			});
-
-			// add start snake parts
-			snake.add(new Corner(width / 2, height / 2));
-			snake.add(new Corner(width / 2, height / 2));
-			snake.add(new Corner(width / 2, height / 2));
-			//If you do not want to use css style, you can just delete the next line.
-			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
-			primaryStage.setScene(scene);
-			primaryStage.setTitle("SNAKE GAME");
-			primaryStage.show();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	// tick
-	public static void tick(GraphicsContext gc) {
-		if (gameOver) {
-			gc.setFill(Color.RED);
-			gc.setFont(new Font("", 50));
-			gc.fillText("GAME OVER", 100, 250);
-			return;
-		}
-
-		for (int i = snake.size() - 1; i >= 1; i--) {
-			snake.get(i).x = snake.get(i - 1).x;
-			snake.get(i).y = snake.get(i - 1).y;
-		}
-
-		switch (direction) {
-		case up:
-			snake.get(0).y--;
-			if (snake.get(0).y < 0) {
-				gameOver = true;
-			}
-			break;
-		case down:
-			snake.get(0).y++;
-			if (snake.get(0).y > height) {
-				gameOver = true;
-			}
-			break;
-		case left:
-			snake.get(0).x--;
-			if (snake.get(0).x < 0) {
-				gameOver = true;
-			}
-			break;
-		case right:
-			snake.get(0).x++;
-			if (snake.get(0).x > width) {
-				gameOver = true;
-			}
-			break;
-
-		}
-
-		// eat food
-		if (foodX == snake.get(0).x && foodY == snake.get(0).y) {
-			snake.add(new Corner(-1, -1));
-			newFood();
-		}
-
-		// self destroy
-		for (int i = 1; i < snake.size(); i++) {
-			if (snake.get(0).x == snake.get(i).x && snake.get(0).y == snake.get(i).y) {
-				gameOver = true;
-			}
-		}
-
-		// fill
-		// background
-		gc.setFill(Color.BLACK);
-		gc.fillRect(0, 0, width * cornersize, height * cornersize);
-
-		// score
-		gc.setFill(Color.WHITE);
-		gc.setFont(new Font("", 30));
-		gc.fillText("Score: " + (speed - 6), 10, 30);
-
-		// random foodcolor
-		Color cc = Color.WHITE;
-
-		switch (foodcolor) {
-		case 0:
-			cc = Color.PURPLE;
-			break;
-		case 1:
-			cc = Color.LIGHTBLUE;
-			break;
-		case 2:
-			cc = Color.YELLOW;
-			break;
-		case 3:
-			cc = Color.PINK;
-			break;
-		case 4:
-			cc = Color.ORANGE;
-			break;
-		}
-		gc.setFill(cc);
-		gc.fillOval(foodX * cornersize, foodY * cornersize, cornersize, cornersize);
-
-		// snake
-		for (Corner c : snake) {
-			gc.setFill(Color.LIGHTGREEN);
-			gc.fillRect(c.x * cornersize, c.y * cornersize, cornersize - 1, cornersize - 1);
-			gc.setFill(Color.GREEN);
-			gc.fillRect(c.x * cornersize, c.y * cornersize, cornersize - 2, cornersize - 2);
-
-		}
-
-	}
-
-	// food
-	public static void newFood() {
-		start: while (true) {
-			foodX = rand.nextInt(width);
-			foodY = rand.nextInt(height);
-
-			for (Corner c : snake) {
-				if (c.x == foodX && c.y == foodY) {
-					continue start;
-				}
-			}
-			foodcolor = rand.nextInt(5);
-			speed++;
-			break;
-
-		}
-	}
-
-	public static void main(String[] args) {
-		launch(args);
-	}
+void setup() { 
+  size(600, 600); 
+  x.add(0); //snake start position
+  y.add(15);
+}   
+void draw() {  
+  background(0);
+  fill(0, 255, 0); //snake color green
+  for (int i = 0; i < x.size(); i++) rect(x.get(i)*blocks, y.get(i)*blocks, blocks, blocks); //snake
+  if (!gameover) {  
+    fill(fc1, fc2, fc3); //food color red
+    ellipse(foodx*blocks+10, foody*blocks+10, blocks, blocks); //food
+    textAlign(LEFT); //score
+    textSize(25);
+    fill(255);
+    text("Score: " + x.size(), 10, 10, width - 20, 50);
+    if (frameCount%speed==0) { 
+      x.add(0, x.get(0) + x_direction[direction]); //make snake longer
+      y.add(0, y.get(0) + y_direction[direction]);
+      if (x.get(0) < 0 || y.get(0) < 0 || x.get(0) >= w || y.get(0) >= h) gameover = true; 
+      for (int i=1; i<x.size(); i++) 
+        if (x.get(0)==x.get(i)&&y.get(0)==y.get(i)) gameover=true; 
+      if (x.get(0)==foodx && y.get(0)==foody) { //new food if we touch
+         if (x.size() %5==0 && speed>=2) speed-=1;  // every 5 points speed increase
+        foodx = (int)random(0, w); //new food
+        foody = (int)random(0, h);
+        fc1 = (int)random(255); fc2 = (int)random(255); fc3 = (int)random(255); //new food color
+      } else { 
+        x.remove(x.size()-1); 
+        y.remove(y.size()-1);
+      }
+    }
+  } else {
+    fill(200, 200, 0); 
+    textSize(30); 
+    textAlign(CENTER); 
+    text("GAME OVER \n Your Score is: "+ x.size() +"\n Press ENTER", width/2, height/3);
+    if (keyCode == ENTER) { 
+      x.clear(); 
+      y.clear(); 
+      x.add(0);  
+      y.add(15);
+      direction = 2;
+      speed = 8;
+      gameover = false;
+    }
+  }
 }
-                
+void keyPressed() { 
+  int newdir=keyCode == DOWN? 0:(keyCode == UP?1:(keyCode == RIGHT?2:(keyCode == LEFT?3:-1)));
+  if (newdir != -1) direction = newdir;
+}
